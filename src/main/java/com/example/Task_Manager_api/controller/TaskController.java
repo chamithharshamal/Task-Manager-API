@@ -51,4 +51,24 @@ public class TaskController {
     public List<Task> getTasksSortedByDate(){
         return taskService.getTasksSortedByDate();
     }
+
+    @GetMapping ("/filter/today")
+    public List<Task> getTaskCreatedToday(){
+        return taskService.getTaskCreatedToday();
+    }
+
+    @GetMapping ("filter/this-week")
+    public List<Task> getTaskCreatedThisWeek(){
+        return taskService.getTaskCreatedThisWeek();
+    }
+
+    @GetMapping ("filter/by-date")
+    public List<Task> getTasksBetweenDates(@RequestParam String fromDate, @RequestParam String toDate){
+        return taskService.getTasksBetweenDates(fromDate, toDate);
+    }
+
+    @GetMapping ("filter/by-month")
+    public List<Task> getTasksByMonth(@RequestParam int month, @RequestParam int year){
+        return taskService.getTasksByMonth(month, year);
+    }
 }

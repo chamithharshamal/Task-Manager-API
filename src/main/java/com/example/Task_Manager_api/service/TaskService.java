@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -57,6 +59,33 @@ public class TaskService {
 
     public List<Task> getTasksSortedByDate(){
         return taskRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    public List<Task> getTaskCreatedToday(){
+        LocalDateTime startOfDay= LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfFay= startOfDay.plusDays(1);
+        return taskRepository.findByCreatedAtBetween(startOfDay, endOfFay);
+    }
+    public List<Task> getTaskCreatedThisWeek(){
+      LocalDateTime now= LocalDateTime.now();
+      LocalDateTime startOfWeek= now.minusDays(7);
+      return taskRepository.findByCreatedAtBetween(startOfWeek, now);
+    }
+    public List<Task> getTasksBetweenDates(String fromDateStr, String toDateStr){
+        DateTimeFormatter formatter= DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate fromDate = LocalDate.parse(fromDateStr, formatter);
+        LocalDate toDate = LocalDate.parse(toDateStr, formatter);
+
+        LocalDateTime start = fromDate.atStartOfDay();
+        LocalDateTime end = toDate.plusDays(1).atStartOfDay();
+
+        return taskRepository.findByCreatedAtBetween(start, end);
+    }
+
+    public List<Task> getTasksByMonth(int month, int year){
+        LocalDateTime start = LocalDate.of(year, month, 1).atStartOfDay();
+        LocalDateTime end = start.plusMonths(1);
+        return taskRepository.findByCreatedAtBetween(start, end);
     }
 
 
