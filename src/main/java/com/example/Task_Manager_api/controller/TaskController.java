@@ -1,6 +1,7 @@
 package com.example.Task_Manager_api.controller;
 
 import com.example.Task_Manager_api.model.Task;
+import com.example.Task_Manager_api.model.TaskStatus;
 import com.example.Task_Manager_api.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -25,5 +26,29 @@ public class TaskController {
     @GetMapping
     public List<Task> getAllTasks(){
         return taskService.getAllTasks();
+    }
+    @GetMapping("/{id}")
+    public Task getTaskById(@PathVariable Long id) {
+        return taskService.getTaskById(id);
+    }
+    @PutMapping("/{id}")
+    public Task updateTask(@PathVariable Long id, @Valid @RequestBody Task task) {
+        return taskService.updateTask(id, task);
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteTask(@PathVariable Long id) {
+        taskService.deleteTask(id);
+        return "Task deleted successfully.";
+    }
+
+    @GetMapping ("/status/{status}")
+    public List<Task> getTasksByStatus(@PathVariable TaskStatus status){
+        return taskService.getTasksByStatus(status);
+    }
+
+    @GetMapping ("/sorted/createdAt")
+    public List<Task> getTasksSortedByDate(){
+        return taskService.getTasksSortedByDate();
     }
 }

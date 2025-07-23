@@ -1,4 +1,5 @@
 package com.example.Task_Manager_api.controller;
+
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,5 +35,12 @@ public class GlobalExceptionHandler {
             errors.put("error", "Invalid format: " + ex.getMessage());
         }
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getReason());
+        return new ResponseEntity<>(errors, ex.getStatusCode());
     }
 }
