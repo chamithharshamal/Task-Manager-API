@@ -92,6 +92,9 @@ public class TaskService {
     public Page<Task> getAllTasks(Pageable pageable) {
         return taskRepository.findAll(pageable);
     }
+    public List<Task> searchByTitle(String title){
+        return taskRepository.findByTitleContainingIgnoreCase(title);
+    }
 
 
 

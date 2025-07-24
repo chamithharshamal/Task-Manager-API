@@ -86,5 +86,9 @@ public class TaskController {
         Pageable pageable = PageRequest.of(page, size, sort);
         return taskService.getAllTasks(pageable);
     }
+    @GetMapping ("/search")
+    public List<Task> searchByTitle(@RequestParam("title") String title){
+        return taskService.searchByTitle(title);
+    }
 
 }
