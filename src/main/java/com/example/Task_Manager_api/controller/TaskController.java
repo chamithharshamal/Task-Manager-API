@@ -4,6 +4,10 @@ import com.example.Task_Manager_api.model.Task;
 import com.example.Task_Manager_api.model.TaskStatus;
 import com.example.Task_Manager_api.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -57,18 +61,30 @@ public class TaskController {
         return taskService.getTaskCreatedToday();
     }
 
-    @GetMapping ("filter/this-week")
+    @GetMapping ("/filter/this-week")
     public List<Task> getTaskCreatedThisWeek(){
         return taskService.getTaskCreatedThisWeek();
     }
 
-    @GetMapping ("filter/by-date")
+    @GetMapping ("/filter/by-date")
     public List<Task> getTasksBetweenDates(@RequestParam String fromDate, @RequestParam String toDate){
         return taskService.getTasksBetweenDates(fromDate, toDate);
     }
 
-    @GetMapping ("filter/by-month")
+    @GetMapping ("/filter/by-month")
     public List<Task> getTasksByMonth(@RequestParam int month, @RequestParam int year){
         return taskService.getTasksByMonth(month, year);
     }
+    @GetMapping ("/paginated")
+    public Page<Task> getAllTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return taskService.getAllTasks(pageable);
+    }
+
 }
