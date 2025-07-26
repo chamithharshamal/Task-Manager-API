@@ -8,12 +8,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-
 import java.util.List;
-
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -22,73 +23,88 @@ public class TaskController {
     @Autowired
     private TaskService taskService;
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping
-    public Task createTask(@Valid @RequestBody Task task){
-        return taskService.saveTask(task);
+    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
+        return ResponseEntity.ok(taskService.saveTask(task));
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
-    public List<Task> getAllTasks(){
-        return taskService.getAllTasks();
+    public ResponseEntity<List<Task>> getAllTasks() {
+        return ResponseEntity.ok(taskService.getAllTasks());
     }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
-    public Task getTaskById(@PathVariable Long id) {
-        return taskService.getTaskById(id);
+    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.getTaskById(id));
     }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @Valid @RequestBody Task task) {
-        return taskService.updateTask(id, task);
+    public ResponseEntity<Task> updateTask(@PathVariable Long id, @Valid @RequestBody Task task) {
+        return ResponseEntity.ok(taskService.updateTask(id, task));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public String deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
-        return "Task deleted successfully.";
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping ("/status/{status}")
-    public List<Task> getTasksByStatus(@PathVariable TaskStatus status){
-        return taskService.getTasksByStatus(status);
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Task>> getTasksByStatus(@PathVariable TaskStatus status) {
+        return ResponseEntity.ok(taskService.getTasksByStatus(status));
     }
 
-    @GetMapping ("/sorted/createdAt")
-    public List<Task> getTasksSortedByDate(){
-        return taskService.getTasksSortedByDate();
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/sorted/createdAt")
+    public ResponseEntity<List<Task>> getTasksSortedByDate() {
+        return ResponseEntity.ok(taskService.getTasksSortedByDate());
     }
 
-    @GetMapping ("/filter/today")
-    public List<Task> getTaskCreatedToday(){
-        return taskService.getTaskCreatedToday();
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/filter/today")
+    public ResponseEntity<List<Task>> getTaskCreatedToday() {
+        return ResponseEntity.ok(taskService.getTaskCreatedToday());
     }
 
-    @GetMapping ("/filter/this-week")
-    public List<Task> getTaskCreatedThisWeek(){
-        return taskService.getTaskCreatedThisWeek();
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/filter/this-week")
+    public ResponseEntity<List<Task>> getTaskCreatedThisWeek() {
+        return ResponseEntity.ok(taskService.getTaskCreatedThisWeek());
     }
 
-    @GetMapping ("/filter/by-date")
-    public List<Task> getTasksBetweenDates(@RequestParam String fromDate, @RequestParam String toDate){
-        return taskService.getTasksBetweenDates(fromDate, toDate);
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/filter/by-date")
+    public ResponseEntity<List<Task>> getTasksBetweenDates(@RequestParam @Valid String fromDate, @RequestParam @Valid String toDate) {
+        return ResponseEntity.ok(taskService.getTasksBetweenDates(fromDate, toDate));
     }
 
-    @GetMapping ("/filter/by-month")
-    public List<Task> getTasksByMonth(@RequestParam int month, @RequestParam int year){
-        return taskService.getTasksByMonth(month, year);
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/filter/by-month")
+    public ResponseEntity<List<Task>> getTasksByMonth(@RequestParam int month, @RequestParam int year) {
+        return ResponseEntity.ok(taskService.getTasksByMonth(month, year));
     }
-    @GetMapping ("/paginated")
-    public Page<Task> getAllTasks(
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<Task>> getAllTasks(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
+            @RequestParam(defaultValue = "desc") String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return taskService.getAllTasks(pageable);
-    }
-    @GetMapping ("/search")
-    public List<Task> searchByTitle(@RequestParam("title") String title){
-        return taskService.searchByTitle(title);
+        return ResponseEntity.ok(taskService.getAllTasks(pageable));
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/search")
+    public ResponseEntity<List<Task>> searchByTitle(@RequestParam("title") String title) {
+        return ResponseEntity.ok(taskService.searchByTitle(title));
+    }
 }

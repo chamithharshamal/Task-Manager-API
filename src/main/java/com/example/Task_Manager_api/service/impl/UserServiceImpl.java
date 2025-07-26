@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -27,8 +28,17 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Username is already taken");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword())); // Encrypt password
-        user.setRoles(Collections.singleton("ROLE_USER")); // Default role
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            user.setRoles(Collections.singleton("ROLE_USER"));
+        } else {
+            user.setRoles(
+                    user.getRoles().stream()
+                            .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase())
+                            .collect(Collectors.toSet())
+            );
+        }
         return userRepository.save(user);
     }
+
 }
