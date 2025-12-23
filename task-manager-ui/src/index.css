@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
+
+  --color-cyber-black: #0a0a0a;
+  --color-cyber-dark: #121212;
+  --color-cyber-card: #1e1e1e;
+  --color-cyber-accent: #10b981;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-cyber-black text-gray-100 font-sans;
+}
+
+.glass-card {
+  @apply bg-cyber-card/80 backdrop-blur-md border border-white/10 rounded-xl;
+}
+
+.btn-primary {
+  @apply bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95 shadow-lg shadow-emerald-900/20;
+}
+
+.input-field {
+  @apply bg-cyber-dark border border-white/10 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all duration-200;
+}

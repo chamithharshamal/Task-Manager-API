@@ -12,14 +12,17 @@ import java.util.Set;
 @Component
 public class JwtTokenProvider {
 
-    private final Key jwtSecret;
+    private Key jwtSecret;
+
+    @Value("${jwt.secret}")
+    private String secret;
 
     @Value("${jwt.expiration-in-ms}")
     private int jwtExpirationInMs;
 
-    public JwtTokenProvider() {
-        // Generate a secure key for HS512
-        this.jwtSecret = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.jwtSecret = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
     public String generateToken(String username, Set<String> roles) {
