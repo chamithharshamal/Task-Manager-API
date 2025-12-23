@@ -17,6 +17,16 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            authService.register(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
@@ -26,9 +36,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-// On frontend: just delete token from localStorage/sessionStorage
+        // On frontend: just delete token from localStorage/sessionStorage
         return ResponseEntity.ok("Logged out successfully.");
     }
 }

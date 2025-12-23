@@ -47,7 +47,7 @@ public class TaskController {
         return ResponseEntity.ok(taskService.updateTask(id, task));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
@@ -80,7 +80,8 @@ public class TaskController {
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/filter/by-date")
-    public ResponseEntity<List<Task>> getTasksBetweenDates(@RequestParam @Valid String fromDate, @RequestParam @Valid String toDate) {
+    public ResponseEntity<List<Task>> getTasksBetweenDates(@RequestParam @Valid String fromDate,
+            @RequestParam @Valid String toDate) {
         return ResponseEntity.ok(taskService.getTasksBetweenDates(fromDate, toDate));
     }
 

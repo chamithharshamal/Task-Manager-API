@@ -14,4 +14,4 @@ spring:
 
 jwt:
   secret: "v9y$B&E)H@McQfTjWnZr4u7x!A%C*F-JaNdRgUkXp2s5v8y/B?E(G+KbPeShVmYp"
-  expiration-in-ms: 3600000 # 1 hour
+  expiration-in-ms: 3600000

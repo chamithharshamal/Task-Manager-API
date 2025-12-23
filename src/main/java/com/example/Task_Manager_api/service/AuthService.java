@@ -12,6 +12,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.stream.Collectors;
+
 @Service
 public class AuthService {
 
@@ -30,8 +33,7 @@ public class AuthService {
     public String authenticate(AuthRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication); // Optional for JWT
             User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found after authentication"));
@@ -42,8 +44,23 @@ public class AuthService {
             throw new RuntimeException("User not found", e);
         }
     }
+
     public void register(User user) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new RuntimeException("Username is already taken");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            user.setRoles(Collections.singleton("ROLE_USER"));
+        } else {
+            user.setRoles(
+                    user.getRoles().stream()
+                            .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase())
+                            .collect(Collectors.toSet()));
+        }
+
         userRepository.save(user);
     }
 }

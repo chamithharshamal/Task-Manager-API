@@ -9,6 +9,8 @@ const taskSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
     description: z.string().optional(),
     status: z.enum(['TO_DO', 'IN_PROGRESS', 'COMPLETED']),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+    dueDate: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -35,8 +37,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
             title: initialData.title,
             description: initialData.description,
             status: initialData.status,
+            priority: initialData.priority,
+            dueDate: initialData.dueDate,
         } : {
             status: 'TO_DO',
+            priority: 'MEDIUM',
         },
     });
 
@@ -46,10 +51,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
                 title: initialData.title,
                 description: initialData.description,
                 status: initialData.status,
+                priority: initialData.priority,
+                dueDate: initialData.dueDate,
             } : {
                 title: '',
                 description: '',
                 status: 'TO_DO',
+                priority: 'MEDIUM',
+                dueDate: '',
             });
         }
     }, [isOpen, initialData, reset]);
@@ -97,6 +106,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
                             placeholder="Add some details..."
                             className="w-full input-field resize-none"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1.5">Priority</label>
+                            <select
+                                {...register('priority')}
+                                className="w-full input-field appearance-none bg-cyber-dark"
+                            >
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1.5">Due Date</label>
+                            <input
+                                {...register('dueDate')}
+                                type="date"
+                                className="w-full input-field bg-cyber-dark"
+                            />
+                        </div>
                     </div>
 
                     <div>

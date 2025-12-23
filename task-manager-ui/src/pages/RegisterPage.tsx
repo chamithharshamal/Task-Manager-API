@@ -2,21 +2,23 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogIn, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { UserPlus, Loader2, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import type { AuthResponse } from '../types';
 
-const loginSchema = z.object({
+const registerSchema = z.object({
     username: z.string().min(3, 'Username must be at least 3 characters'),
     password: z.string().min(4, 'Password must be at least 4 characters'),
+    confirmPassword: z.string().min(4, 'Confirm password must be at least 4 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type RegisterForm = z.infer<typeof registerSchema>;
 
-export const LoginPage: React.FC = () => {
-    const setAuth = useAuthStore((state) => state.setAuth);
+export const RegisterPage: React.FC = () => {
+    const navigate = useNavigate();
     const [error, setError] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
@@ -24,19 +26,23 @@ export const LoginPage: React.FC = () => {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<LoginForm>({
-        resolver: zodResolver(loginSchema),
+    } = useForm<RegisterForm>({
+        resolver: zodResolver(registerSchema),
     });
 
-    const onSubmit = async (data: LoginForm) => {
+    const onSubmit = async (data: RegisterForm) => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await api.post<AuthResponse>('/auth/login', data);
-            setAuth(response.data.token);
-            window.location.href = '/';
+            // Mapping to the backend User model (roles defaults to empty set or handled by backend)
+            await api.post('/auth/register', {
+                username: data.username,
+                password: data.password,
+                roles: ['USER'] // Default role
+            });
+            navigate('/login');
         } catch (err: any) {
-            setError(err.response?.data || 'Login failed. Please check your credentials.');
+            setError(err.response?.data || 'Registration failed. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -48,11 +54,11 @@ export const LoginPage: React.FC = () => {
                 <div className="text-center">
                     <div className="flex justify-center mb-4">
                         <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                            <LogIn className="w-8 h-8 text-emerald-500" />
+                            <UserPlus className="w-8 h-8 text-emerald-500" />
                         </div>
                     </div>
-                    <h2 className="text-3xl font-bold text-white tracking-tight">Welcome Back</h2>
-                    <p className="mt-2 text-gray-400">Sign in to manage your tasks</p>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">Create Account</h2>
+                    <p className="mt-2 text-gray-400">Join Tasker and stay organized</p>
                 </div>
 
                 <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -68,7 +74,7 @@ export const LoginPage: React.FC = () => {
                             {...register('username')}
                             type="text"
                             className={`w-full input-field ${errors.username ? 'border-red-500/50' : ''}`}
-                            placeholder="Enter your username"
+                            placeholder="Choose a username"
                         />
                         {errors.username && (
                             <p className="mt-1 text-xs text-red-500">{errors.username.message}</p>
@@ -88,6 +94,19 @@ export const LoginPage: React.FC = () => {
                         )}
                     </div>
 
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
+                        <input
+                            {...register('confirmPassword')}
+                            type="password"
+                            className={`w-full input-field ${errors.confirmPassword ? 'border-red-500/50' : ''}`}
+                            placeholder="••••••••"
+                        />
+                        {errors.confirmPassword && (
+                            <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
+                        )}
+                    </div>
+
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -96,17 +115,15 @@ export const LoginPage: React.FC = () => {
                         {isLoading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                            'Sign In'
+                            'Register Now'
                         )}
                     </button>
 
-                    <div className="text-center mt-4">
-                        <p className="text-sm text-gray-400">
-                            Don't have an account?{' '}
-                            <Link to="/register" className="text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
-                                Sign Up
-                            </Link>
-                        </p>
+                    <div className="text-center">
+                        <Link to="/login" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-emerald-500 transition-colors">
+                            <ArrowLeft className="w-4 h-4" />
+                            Already have an account? Sign In
+                        </Link>
                     </div>
                 </form>
             </div>

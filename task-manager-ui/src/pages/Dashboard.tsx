@@ -14,58 +14,76 @@ import {
     ChevronRight
 } from 'lucide-react';
 import type { Task } from '../types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAuthStore } from '../store/authStore';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
 
 export const Dashboard: React.FC = () => {
     const logout = useAuthStore((state) => state.logout);
-    const [tasks, setTasks] = React.useState<Task[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
+    const queryClient = useQueryClient();
     const [search, setSearch] = React.useState('');
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
 
-    const loadTasks = async () => {
-        setIsLoading(true);
-        try {
-            const data = await taskService.getTasks();
-            setTasks(data);
-        } catch (err) {
-            console.error('Failed to load tasks', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Fetch tasks
+    const { data: tasks = [], isLoading, isError } = useQuery({
+        queryKey: ['tasks'],
+        queryFn: taskService.getTasks,
+        staleTime: 1000 * 60 * 5,
+    });
 
     React.useEffect(() => {
-        loadTasks();
-    }, []);
+        if (isError) {
+            toast.error('Failed to sync tasks with server');
+        }
+    }, [isError]);
 
-    const handleCreateOrUpdate = async (data: any) => {
-        try {
-            if (editingTask) {
-                await taskService.updateTask(editingTask.id, data);
-            } else {
-                await taskService.createTask(data);
-            }
-            loadTasks();
+    // Create/Update mutation
+    const saveMutation = useMutation({
+        mutationFn: (data: any) => editingTask
+            ? taskService.updateTask(editingTask.id, data)
+            : taskService.createTask(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setIsModalOpen(false);
             setEditingTask(undefined);
-        } catch (err) {
-            console.error(err);
+            toast.success(editingTask ? 'Task updated' : 'Task created successfully');
+        },
+        onError: () => {
+            toast.error('Failed to save task');
         }
+    });
+
+    // Delete mutation
+    const deleteMutation = useMutation({
+        mutationFn: taskService.deleteTask,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            toast.success('Task deleted');
+        },
+        onError: () => {
+            toast.error('Failed to delete task');
+        }
+    });
+
+    const handleCreateOrUpdate = async (data: any) => {
+        saveMutation.mutate(data);
     };
 
     const handleDelete = async (id: number) => {
-        if (confirm('Are you sure you want to delete this task?')) {
-            try {
-                await taskService.deleteTask(id);
-                loadTasks();
-            } catch (err) {
-                console.error(err);
+        toast.warning('Are you sure?', {
+            description: 'This action cannot be undone.',
+            action: {
+                label: 'Delete',
+                onClick: () => deleteMutation.mutate(id),
+            },
+            cancel: {
+                label: 'Cancel',
+                onClick: () => { },
             }
-        }
+        });
     };
 
     const stats = {
@@ -195,8 +213,9 @@ export const Dashboard: React.FC = () => {
                             <thead>
                                 <tr className="bg-white/5 text-gray-400 text-sm uppercase tracking-wider">
                                     <th className="px-6 py-4 font-medium">Task</th>
+                                    <th className="px-6 py-4 font-medium">Priority</th>
                                     <th className="px-6 py-4 font-medium">Status</th>
-                                    <th className="px-6 py-4 font-medium">Created At</th>
+                                    <th className="px-6 py-4 font-medium">Due Date</th>
                                     <th className="px-6 py-4 font-medium text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -224,6 +243,16 @@ export const Dashboard: React.FC = () => {
                                                 <div className="text-xs text-gray-500 truncate max-w-xs">{task.description}</div>
                                             </td>
                                             <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border ${task.priority === 'HIGH'
+                                                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                    : task.priority === 'MEDIUM'
+                                                        ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                                                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                    }`}>
+                                                    {task.priority || 'MEDIUM'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${task.status === 'COMPLETED'
                                                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                     : task.status === 'IN_PROGRESS'
@@ -234,7 +263,14 @@ export const Dashboard: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-400">
-                                                {new Date(task.createdAt).toLocaleDateString()}
+                                                {task.dueDate ? (
+                                                    <span className={`flex items-center gap-1.5 ${new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED' ? 'text-red-400' : ''}`}>
+                                                        <Clock className="w-3 h-3" />
+                                                        {new Date(task.dueDate).toLocaleDateString()}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-600 italic">No date</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
