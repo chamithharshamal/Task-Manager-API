@@ -2,6 +2,7 @@ package com.example.Task_Manager_api.service;
 
 import com.example.Task_Manager_api.model.Task;
 import com.example.Task_Manager_api.model.TaskStatus;
+import com.example.Task_Manager_api.model.TaskPriority;
 import com.example.Task_Manager_api.model.User;
 import com.example.Task_Manager_api.repository.TaskRepository;
 import com.example.Task_Manager_api.repository.UserRepository;
@@ -43,9 +44,20 @@ public class TaskService {
     public Task saveTask(Task task) {
         User currentUser = getCurrentUser();
         task.setUser(currentUser);
-        if (task.getCreatedAt() == null) {
-            task.setCreatedAt(LocalDateTime.now());
+
+        // Apply defaults ONLY for new tasks
+        if (task.getId() == null) {
+            if (task.getStatus() == null) {
+                task.setStatus(TaskStatus.TO_DO);
+            }
+            if (task.getPriority() == null) {
+                task.setPriority(TaskPriority.MEDIUM);
+            }
+            if (task.getCreatedAt() == null) {
+                task.setCreatedAt(LocalDateTime.now());
+            }
         }
+
         return taskRepository.save(task);
     }
 
@@ -61,14 +73,26 @@ public class TaskService {
                         "Task with ID " + id + " not found or access denied"));
     }
 
-    public Task updateTask(Long id, Task updatedTask) {
+    public Task updateTask(Long id, Task partialTask) {
         Task existingTask = getTaskById(id); // Already checks ownership
-        updatedTask.setId(id);
-        updatedTask.setUser(existingTask.getUser());
-        if (updatedTask.getCreatedAt() == null) {
-            updatedTask.setCreatedAt(existingTask.getCreatedAt());
+
+        if (partialTask.getTitle() != null) {
+            existingTask.setTitle(partialTask.getTitle());
         }
-        return taskRepository.save(updatedTask);
+        if (partialTask.getDescription() != null) {
+            existingTask.setDescription(partialTask.getDescription());
+        }
+        if (partialTask.getStatus() != null) {
+            existingTask.setStatus(partialTask.getStatus());
+        }
+        if (partialTask.getPriority() != null) {
+            existingTask.setPriority(partialTask.getPriority());
+        }
+        if (partialTask.getDueDate() != null) {
+            existingTask.setDueDate(partialTask.getDueDate());
+        }
+
+        return taskRepository.save(existingTask);
     }
 
     public void deleteTask(Long id) {

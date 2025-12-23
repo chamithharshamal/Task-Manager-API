@@ -11,19 +11,24 @@ import {
     Trash2,
     Edit,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    LayoutGrid,
+    Rows3
 } from 'lucide-react';
-import type { Task } from '../types';
+import type { Task, TaskStatus } from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuthStore } from '../store/authStore';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
+import { KanbanBoard } from '../components/KanbanBoard';
+import { cn } from '../utils/cn';
 
 export const Dashboard: React.FC = () => {
     const logout = useAuthStore((state) => state.logout);
     const queryClient = useQueryClient();
     const [search, setSearch] = React.useState('');
+    const [view, setView] = React.useState<'table' | 'kanban'>('table');
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
 
@@ -39,6 +44,30 @@ export const Dashboard: React.FC = () => {
             toast.error('Failed to sync tasks with server');
         }
     }, [isError]);
+
+    React.useEffect(() => {
+        const handleOpenModal = () => {
+            setEditingTask(undefined);
+            setIsModalOpen(true);
+        };
+        const handleEditTask = (e: any) => {
+            setEditingTask(e.detail);
+            setIsModalOpen(true);
+        };
+        const handleSwitchView = (e: any) => {
+            setView(e.detail);
+        };
+
+        window.addEventListener('open-task-modal', handleOpenModal);
+        window.addEventListener('edit-task', handleEditTask);
+        window.addEventListener('switch-view', handleSwitchView);
+
+        return () => {
+            window.removeEventListener('open-task-modal', handleOpenModal);
+            window.removeEventListener('edit-task', handleEditTask);
+            window.removeEventListener('switch-view', handleSwitchView);
+        };
+    }, []);
 
     // Create/Update mutation
     const saveMutation = useMutation({
@@ -56,6 +85,18 @@ export const Dashboard: React.FC = () => {
         }
     });
 
+    // Quick Status Update mutation
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ id, status }: { id: number, status: TaskStatus }) =>
+            taskService.updateTask(id, { status }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        },
+        onError: () => {
+            toast.error('Failed to update task status');
+        }
+    });
+
     // Delete mutation
     const deleteMutation = useMutation({
         mutationFn: taskService.deleteTask,
@@ -70,6 +111,10 @@ export const Dashboard: React.FC = () => {
 
     const handleCreateOrUpdate = async (data: any) => {
         saveMutation.mutate(data);
+    };
+
+    const handleStatusUpdate = (id: number, status: TaskStatus) => {
+        updateStatusMutation.mutate({ id, status });
     };
 
     const handleDelete = async (id: number) => {
@@ -195,7 +240,31 @@ export const Dashboard: React.FC = () => {
                 {/* Task List Section */}
                 <div className="glass-card overflow-hidden">
                     <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <h2 className="text-xl font-bold text-white">Recent Tasks</h2>
+                        <div className="flex items-center gap-6">
+                            <h2 className="text-xl font-bold text-white">Tasks</h2>
+                            <div className="flex bg-cyber-black p-1 rounded-lg border border-white/5">
+                                <button
+                                    onClick={() => setView('table')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all",
+                                        view === 'table' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    <Rows3 className="w-4 h-4" />
+                                    Table
+                                </button>
+                                <button
+                                    onClick={() => setView('kanban')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all",
+                                        view === 'kanban' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                    Kanban
+                                </button>
+                            </div>
+                        </div>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                             <input
@@ -208,94 +277,108 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-white/5 text-gray-400 text-sm uppercase tracking-wider">
-                                    <th className="px-6 py-4 font-medium">Task</th>
-                                    <th className="px-6 py-4 font-medium">Priority</th>
-                                    <th className="px-6 py-4 font-medium">Status</th>
-                                    <th className="px-6 py-4 font-medium">Due Date</th>
-                                    <th className="px-6 py-4 font-medium text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {isLoading ? (
-                                    Array.from({ length: 3 }).map((_, i) => (
-                                        <tr key={i} className="animate-pulse">
-                                            <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-3/4"></div></td>
-                                            <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded-full w-20"></div></td>
-                                            <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-1/2"></div></td>
-                                            <td className="px-6 py-4"></td>
+                    <div className="p-6">
+                        {view === 'kanban' ? (
+                            <KanbanBoard
+                                tasks={filteredTasks}
+                                onUpdateStatus={handleStatusUpdate}
+                                onEdit={(task) => {
+                                    setEditingTask(task);
+                                    setIsModalOpen(true);
+                                }}
+                                onDelete={handleDelete}
+                            />
+                        ) : (
+                            <div className="overflow-x-auto -mx-6 -mb-6">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-white/5 text-gray-400 text-sm uppercase tracking-wider">
+                                            <th className="px-6 py-4 font-medium">Task</th>
+                                            <th className="px-6 py-4 font-medium">Priority</th>
+                                            <th className="px-6 py-4 font-medium">Status</th>
+                                            <th className="px-6 py-4 font-medium">Due Date</th>
+                                            <th className="px-6 py-4 font-medium text-right">Actions</th>
                                         </tr>
-                                    ))
-                                ) : filteredTasks.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
-                                            No tasks found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredTasks.map((task) => (
-                                        <tr key={task.id} className="hover:bg-white/[0.02] transition-colors group">
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-white">{task.title}</div>
-                                                <div className="text-xs text-gray-500 truncate max-w-xs">{task.description}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border ${task.priority === 'HIGH'
-                                                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                                                    : task.priority === 'MEDIUM'
-                                                        ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-                                                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                    }`}>
-                                                    {task.priority || 'MEDIUM'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${task.status === 'COMPLETED'
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                    : task.status === 'IN_PROGRESS'
-                                                        ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                                        : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                                                    }`}>
-                                                    {task.status.replace('_', ' ')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-400">
-                                                {task.dueDate ? (
-                                                    <span className={`flex items-center gap-1.5 ${new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED' ? 'text-red-400' : ''}`}>
-                                                        <Clock className="w-3 h-3" />
-                                                        {new Date(task.dueDate).toLocaleDateString()}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-gray-600 italic">No date</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingTask(task);
-                                                            setIsModalOpen(true);
-                                                        }}
-                                                        className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-emerald-500"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(task.id)}
-                                                        className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-red-500"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {isLoading ? (
+                                            Array.from({ length: 3 }).map((_, i) => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-3/4"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded-full w-20"></div></td>
+                                                    <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-1/2"></div></td>
+                                                    <td className="px-6 py-4"></td>
+                                                </tr>
+                                            ))
+                                        ) : filteredTasks.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                                                    No tasks found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredTasks.map((task) => (
+                                                <tr key={task.id} className="hover:bg-white/[0.02] transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-medium text-white">{task.title}</div>
+                                                        <div className="text-xs text-gray-500 truncate max-w-xs">{task.description}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border ${task.priority === 'HIGH'
+                                                            ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                            : task.priority === 'MEDIUM'
+                                                                ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                                                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                            }`}>
+                                                            {task.priority || 'MEDIUM'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${task.status === 'COMPLETED'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                            : task.status === 'IN_PROGRESS'
+                                                                ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                                : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                                            }`}>
+                                                            {task.status.replace('_', ' ')}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-400">
+                                                        {task.dueDate ? (
+                                                            <span className={`flex items-center gap-1.5 ${new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED' ? 'text-red-400' : ''}`}>
+                                                                <Clock className="w-3 h-3" />
+                                                                {new Date(task.dueDate).toLocaleDateString()}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-600 italic">No date</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingTask(task);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                                className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-emerald-500"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(task.id)}
+                                                                className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-red-500"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
 
                     <div className="p-4 border-t border-white/5 flex items-center justify-between">

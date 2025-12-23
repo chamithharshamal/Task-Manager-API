@@ -1,9 +1,10 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Loader2 } from 'lucide-react';
 import type { Task } from '../types';
+import { RichTextEditor } from './RichTextEditor';
 
 const taskSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -30,6 +31,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
         register,
         handleSubmit,
         reset,
+        control,
         formState: { errors },
     } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
@@ -79,7 +81,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-md glass-card p-6 scale-in">
+            <div className="w-full max-w-2xl glass-card p-6 scale-in">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-white">{modalTitle}</h2>
                     <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-full transition-colors">
@@ -100,11 +102,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
 
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1.5">Description</label>
-                        <textarea
-                            {...register('description')}
-                            rows={3}
-                            placeholder="Add some details..."
-                            className="w-full input-field resize-none"
+                        <Controller
+                            name="description"
+                            control={control}
+                            render={({ field }) => (
+                                <RichTextEditor
+                                    content={field.value || ''}
+                                    onChange={field.onChange}
+                                    placeholder="Add some details..."
+                                />
+                            )}
                         />
                     </div>
 

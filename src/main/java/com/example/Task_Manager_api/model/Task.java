@@ -23,7 +23,7 @@ public class Task {
     private TaskStatus status;
 
     @Enumerated(EnumType.STRING)
-    private TaskPriority priority = TaskPriority.MEDIUM;
+    private TaskPriority priority;
 
     private java.time.LocalDate dueDate;
 
@@ -35,8 +35,6 @@ public class Task {
     private LocalDateTime createdAt;
 
     public Task() {
-        this.createdAt = LocalDateTime.now();
-        this.status = TaskStatus.TO_DO;
     }
 
     public Long getId() {
