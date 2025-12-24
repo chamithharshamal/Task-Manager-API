@@ -1,31 +1,27 @@
 import React from 'react';
 import {
-    LayoutDashboard,
-    CheckCircle2,
-    Clock,
-    ListTodo,
     Plus,
     Search,
-    LogOut,
-    Calendar,
-    Trash2,
-    Edit,
     ChevronLeft,
     ChevronRight,
     LayoutGrid,
-    Rows3
+    Rows3,
+    Edit,
+    Trash2,
+    ListTodo,
+    Clock,
+    CheckCircle2
 } from 'lucide-react';
 import type { Task, TaskStatus } from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useAuthStore } from '../store/authStore';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { KanbanBoard } from '../components/KanbanBoard';
 import { cn } from '../utils/cn';
+import { AppLayout } from '../components/AppLayout';
 
 export const Dashboard: React.FC = () => {
-    const logout = useAuthStore((state) => state.logout);
     const queryClient = useQueryClient();
     const [search, setSearch] = React.useState('');
     const [view, setView] = React.useState<'table' | 'kanban'>('table');
@@ -143,45 +139,8 @@ export const Dashboard: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-cyber-black">
-            {/* Sidebar */}
-            <aside className="fixed left-0 top-0 h-screen w-64 bg-cyber-dark border-r border-white/5 flex flex-col">
-                <div className="p-6">
-                    <div className="flex items-center gap-3 text-emerald-500 font-bold text-xl uppercase tracking-widest">
-                        <div className="p-2 bg-emerald-500/10 rounded-lg">
-                            <CheckCircle2 className="w-6 h-6" />
-                        </div>
-                        Tasker
-                    </div>
-                </div>
-
-                <nav className="flex-1 px-4 py-4 space-y-2">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-emerald-500 bg-emerald-500/10 rounded-xl font-medium">
-                        <LayoutDashboard className="w-5 h-5" />
-                        Dashboard
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                        <Calendar className="w-5 h-5" />
-                        Schedule
-                    </button>
-                </nav>
-
-                <div className="p-4 border-t border-white/5">
-                    <button
-                        onClick={() => {
-                            logout();
-                            window.location.href = '/login';
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-400 hover:bg-red-400/5 rounded-xl transition-all"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        Logout
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="ml-64 p-8">
+        <AppLayout>
+            <div className="p-8">
                 <header className="flex items-center justify-between mb-10">
                     <div>
                         <h1 className="text-3xl font-bold text-white mb-2">My Workspace</h1>
@@ -321,7 +280,10 @@ export const Dashboard: React.FC = () => {
                                                 <tr key={task.id} className="hover:bg-white/[0.02] transition-colors group">
                                                     <td className="px-6 py-4">
                                                         <div className="font-medium text-white">{task.title}</div>
-                                                        <div className="text-xs text-gray-500 truncate max-w-xs">{task.description}</div>
+                                                        <div
+                                                            className="text-xs text-gray-500 line-clamp-1 prose prose-invert prose-xs max-w-xs"
+                                                            dangerouslySetInnerHTML={{ __html: task.description || '' }}
+                                                        />
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border ${task.priority === 'HIGH'
@@ -393,7 +355,7 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
 
             <TaskModal
                 isOpen={isModalOpen}
@@ -402,6 +364,6 @@ export const Dashboard: React.FC = () => {
                 initialData={editingTask}
                 title={editingTask ? 'Edit Task' : 'Create New Task'}
             />
-        </div>
+        </AppLayout>
     );
 };

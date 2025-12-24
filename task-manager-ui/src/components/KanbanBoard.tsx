@@ -110,7 +110,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, onUpdateStatus,
                 {activeTask ? (
                     <div className="glass-card p-4 border-emerald-500/50 rotate-3 shadow-2xl w-[300px]">
                         <h4 className="font-bold text-white mb-1">{activeTask.title}</h4>
-                        <p className="text-xs text-gray-400 line-clamp-2">{activeTask.description}</p>
+                        <div
+                            className="text-xs text-gray-400 line-clamp-2 prose prose-invert prose-xs"
+                            dangerouslySetInnerHTML={{ __html: activeTask.description || '' }}
+                        />
                     </div>
                 ) : null}
             </DragOverlay>
@@ -214,9 +217,10 @@ const SortableTaskCard: React.FC<{
                 </div>
             </div>
             <h4 className="font-bold text-white text-sm mb-1">{task.title}</h4>
-            <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
-                {task.description}
-            </p>
+            <div
+                className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed prose prose-invert prose-xs"
+                dangerouslySetInnerHTML={{ __html: task.description || '' }}
+            />
             {task.dueDate && (
                 <div className={cn("flex items-center gap-1.5 text-[10px] font-medium",
                     new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED' ? 'text-red-400' : 'text-gray-500'
