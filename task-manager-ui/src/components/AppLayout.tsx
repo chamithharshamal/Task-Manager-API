@@ -4,7 +4,8 @@ import {
     BarChart3,
     LogOut,
     CheckCircle2,
-    Calendar
+    Calendar,
+    Users
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -37,6 +38,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             icon: Calendar,
             path: '/schedule',
             active: location.pathname === '/schedule'
+        },
+        {
+            label: 'Groups',
+            icon: Users,
+            path: '/groups',
+            active: location.pathname === '/groups'
         },
     ];
 

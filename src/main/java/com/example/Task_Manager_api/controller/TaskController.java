@@ -108,4 +108,10 @@ public class TaskController {
     public ResponseEntity<List<Task>> searchByTitle(@RequestParam("title") String title) {
         return ResponseEntity.ok(taskService.searchByTitle(title));
     }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/group/{groupId}")
+    public ResponseEntity<List<Task>> getTasksByGroup(@PathVariable Long groupId) {
+        return ResponseEntity.ok(taskService.getTasksByGroup(groupId));
+    }
 }

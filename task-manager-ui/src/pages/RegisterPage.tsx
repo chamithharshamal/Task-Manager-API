@@ -8,6 +8,7 @@ import api from '../api/client';
 
 const registerSchema = z.object({
     username: z.string().min(3, 'Username must be at least 3 characters'),
+    email: z.string().email('Invalid email address'),
     password: z.string().min(4, 'Password must be at least 4 characters'),
     confirmPassword: z.string().min(4, 'Confirm password must be at least 4 characters'),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -37,6 +38,7 @@ export const RegisterPage: React.FC = () => {
             // Mapping to the backend User model (roles defaults to empty set or handled by backend)
             await api.post('/auth/register', {
                 username: data.username,
+                email: data.email,
                 password: data.password,
                 roles: ['USER'] // Default role
             });
@@ -78,6 +80,19 @@ export const RegisterPage: React.FC = () => {
                         />
                         {errors.username && (
                             <p className="mt-1 text-xs text-red-500">{errors.username.message}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                        <input
+                            {...register('email')}
+                            type="email"
+                            className={`w-full input-field ${errors.email ? 'border-red-500/50' : ''}`}
+                            placeholder="your@email.com"
+                        />
+                        {errors.email && (
+                            <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
                         )}
                     </div>
 

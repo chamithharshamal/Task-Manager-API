@@ -33,7 +33,7 @@ export const LoginPage: React.FC = () => {
         setError(null);
         try {
             const response = await api.post<AuthResponse>('/auth/login', data);
-            setAuth(response.data.token);
+            setAuth(response.data.token, data.username);
             window.location.href = '/';
         } catch (err: any) {
             setError(err.response?.data || 'Login failed. Please check your credentials.');

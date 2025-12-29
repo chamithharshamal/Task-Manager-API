@@ -19,13 +19,23 @@ export const taskService = {
         return response.data;
     },
 
-    createTask: async (task: Omit<Task, 'id' | 'createdAt'>) => {
-        const response = await api.post<Task>('/tasks', task);
+    createTask: async (task: any) => {
+        const payload = {
+            ...task,
+            group: task.groupId ? { id: parseInt(task.groupId) } : null,
+            assignedUser: task.assignedUserId ? { id: parseInt(task.assignedUserId) } : null,
+        };
+        const response = await api.post<Task>('/tasks', payload);
         return response.data;
     },
 
-    updateTask: async (id: number, task: Partial<Task>) => {
-        const response = await api.put<Task>(`/tasks/${id}`, task);
+    updateTask: async (id: number, task: any) => {
+        const payload = {
+            ...task,
+            group: task.groupId ? { id: parseInt(task.groupId) } : undefined,
+            assignedUser: task.assignedUserId ? { id: parseInt(task.assignedUserId) } : undefined,
+        };
+        const response = await api.put<Task>(`/tasks/${id}`, payload);
         return response.data;
     },
 
@@ -42,6 +52,11 @@ export const taskService = {
         const response = await api.get<Task[]>('/tasks/search', {
             params: { title },
         });
+        return response.data;
+    },
+
+    getTasksByGroup: async (groupId: number) => {
+        const response = await api.get<Task[]>(`/tasks/group/${groupId}`);
         return response.data;
     },
 };

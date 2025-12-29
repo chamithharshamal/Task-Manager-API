@@ -27,4 +27,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByUserAndTitleContainingIgnoreCase(User user, String title);
 
     Page<Task> findByUser(User user, Pageable pageable);
+
+    List<Task> findByGroup(com.example.Task_Manager_api.model.Group group);
+
+    List<Task> findByGroupId(Long groupId);
+
+    List<Task> findByAssignedUser(User user);
 }

@@ -5,6 +5,20 @@ import { z } from 'zod';
 import { X, Loader2 } from 'lucide-react';
 import type { Task } from '../types';
 import { RichTextEditor } from './RichTextEditor';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/client';
+import { useAuthStore } from '../store/authStore';
+
+interface User {
+    id: number;
+    username: string;
+}
+
+interface Group {
+    id: number;
+    name: string;
+    members: User[];
+}
 
 const taskSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -12,6 +26,8 @@ const taskSchema = z.object({
     status: z.enum(['TO_DO', 'IN_PROGRESS', 'COMPLETED']),
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
     dueDate: z.string().optional(),
+    groupId: z.string().optional(),
+    assignedUserId: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -32,6 +48,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
         handleSubmit,
         reset,
         control,
+        watch,
         formState: { errors },
     } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
@@ -41,11 +58,30 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
             status: initialData.status,
             priority: initialData.priority,
             dueDate: initialData.dueDate,
+            groupId: initialData.group?.id?.toString(),
+            assignedUserId: initialData.assignedUser?.id?.toString(),
         } : {
             status: 'TO_DO',
             priority: 'MEDIUM',
         },
     });
+
+    const currentUser = useAuthStore(state => state.user);
+    const selectedGroupId = watch('groupId');
+
+    // Is current user only the assigned user (and not owner)? 
+    const isOwner = !initialData || initialData.user?.username === currentUser?.username;
+
+    const { data: groups } = useQuery({
+        queryKey: ['groups'],
+        queryFn: async () => {
+            const res = await api.get<Group[]>('/groups/my-groups');
+            return res.data;
+        },
+        enabled: isOpen,
+    });
+
+    const selectedGroup = groups?.find(g => g.id.toString() === selectedGroupId);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -55,12 +91,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
                 status: initialData.status,
                 priority: initialData.priority,
                 dueDate: initialData.dueDate,
+                groupId: initialData.group?.id?.toString(),
+                assignedUserId: initialData.assignedUser?.id?.toString(),
             } : {
                 title: '',
                 description: '',
                 status: 'TO_DO',
                 priority: 'MEDIUM',
                 dueDate: '',
+                groupId: '',
+                assignedUserId: '',
             });
         }
     }, [isOpen, initialData, reset]);
@@ -94,13 +134,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
                         <label className="block text-sm font-medium text-gray-400 mb-1.5">Task Title</label>
                         <input
                             {...register('title')}
+                            disabled={!isOwner}
                             placeholder="What needs to be done?"
-                            className={`w-full input-field ${errors.title ? 'border-red-500/50' : ''}`}
+                            className={`w-full input-field ${errors.title ? 'border-red-500/50' : ''} ${!isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>}
                     </div>
 
-                    <div>
+                    <div className={!isOwner ? 'opacity-50 pointer-events-none' : ''}>
                         <label className="block text-sm font-medium text-gray-400 mb-1.5">Description</label>
                         <Controller
                             name="description"
@@ -120,7 +161,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
                             <label className="block text-sm font-medium text-gray-400 mb-1.5">Priority</label>
                             <select
                                 {...register('priority')}
-                                className="w-full input-field appearance-none bg-cyber-dark"
+                                disabled={!isOwner}
+                                className={`w-full input-field appearance-none bg-cyber-dark ${!isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 <option value="LOW">Low</option>
                                 <option value="MEDIUM">Medium</option>
@@ -133,22 +175,55 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit,
                             <input
                                 {...register('dueDate')}
                                 type="date"
-                                className="w-full input-field bg-cyber-dark"
+                                disabled={!isOwner}
+                                className={`w-full input-field bg-cyber-dark ${!isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                             />
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1.5">Status</label>
-                        <select
-                            {...register('status')}
-                            className="w-full input-field appearance-none bg-cyber-dark"
-                        >
-                            <option value="TO_DO">To Do</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="COMPLETED">Completed</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1.5">Status</label>
+                            <select
+                                {...register('status')}
+                                className="w-full input-field appearance-none bg-cyber-dark"
+                            >
+                                <option value="TO_DO">To Do</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1.5">Group (Optional)</label>
+                            <select
+                                {...register('groupId')}
+                                disabled={!isOwner}
+                                className="w-full input-field appearance-none bg-cyber-dark"
+                            >
+                                <option value="">No Group</option>
+                                {groups?.map(g => (
+                                    <option key={g.id} value={g.id}>{g.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+
+                    {selectedGroupId && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1.5">Assign To</label>
+                            <select
+                                {...register('assignedUserId')}
+                                disabled={!isOwner}
+                                className="w-full input-field appearance-none bg-cyber-dark"
+                            >
+                                <option value="">Unassigned</option>
+                                {selectedGroup?.members.map(m => (
+                                    <option key={m.id} value={m.id}>{m.username}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
 
                     <div className="flex gap-3 mt-8">
                         <button
