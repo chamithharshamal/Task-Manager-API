@@ -31,4 +31,16 @@ public class GroupController {
     public ResponseEntity<Group> getGroupById(@PathVariable Long id) {
         return ResponseEntity.ok(groupService.getGroupById(id));
     }
+
+    @PostMapping("/{id}/leave")
+    public ResponseEntity<String> leaveGroup(@PathVariable Long id) {
+        groupService.leaveGroup(id);
+        return ResponseEntity.ok("Left group successfully");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
+        groupService.deleteGroup(id);
+        return ResponseEntity.noContent().build();
+    }
 }

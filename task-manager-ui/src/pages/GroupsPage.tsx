@@ -1,12 +1,13 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Mail, Plus, Check, X, Loader2, Send, ListTodo, Edit } from 'lucide-react';
+import { Users, Mail, Plus, Check, X, Loader2, Send, ListTodo, Edit, LogOut, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { Group, Invitation, Task } from '../types';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 export const GroupsPage: React.FC = () => {
     const queryClient = useQueryClient();
@@ -16,6 +17,23 @@ export const GroupsPage: React.FC = () => {
     const [selectedGroupId, setSelectedGroupId] = React.useState<number | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
+    const [confirmConfig, setConfirmConfig] = React.useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant: 'danger' | 'warning' | 'info';
+        confirmText?: string;
+        cancelText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'danger',
+        confirmText: 'Confirm',
+        cancelText: 'Cancel'
+    });
 
     const { data: groups, isLoading: groupsLoading } = useQuery({
         queryKey: ['groups'],
@@ -47,9 +65,27 @@ export const GroupsPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['groups'] });
             setNewGroupName('');
-            toast.success('Group created successfully');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Success!',
+                message: 'Your new group has been created successfully.',
+                variant: 'info',
+                confirmText: 'Great',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         },
-        onError: () => toast.error('Failed to create group'),
+        onError: () => {
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Error',
+                message: 'Failed to create group. Please check the name and try again.',
+                variant: 'danger',
+                confirmText: 'Try Again',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
     });
 
     const inviteMutation = useMutation({
@@ -59,9 +95,27 @@ export const GroupsPage: React.FC = () => {
         },
         onSuccess: (_, variables) => {
             setInviteEmails(prev => ({ ...prev, [variables.groupId]: '' }));
-            toast.success('Invitation sent');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Invitation Sent',
+                message: `An invitation email has been sent to ${variables.email}.`,
+                variant: 'info',
+                confirmText: 'Close',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         },
-        onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to send invitation'),
+        onError: (err: any) => {
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Invitation Failed',
+                message: err.response?.data?.message || 'Failed to send invitation. Make sure the email is registered.',
+                variant: 'danger',
+                confirmText: 'Close',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
     });
 
     const acceptMutation = useMutation({
@@ -71,9 +125,102 @@ export const GroupsPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pending-invitations'] });
             queryClient.invalidateQueries({ queryKey: ['groups'] });
-            toast.success('Invitation accepted');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Welcome!',
+                message: 'You have successfully joined the group.',
+                variant: 'info',
+                confirmText: 'Start Working',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         },
-        onError: () => toast.error('Failed to accept invitation'),
+        onError: () => {
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Error',
+                message: 'Failed to accept invitation. It might have been revoked or you are already a member.',
+                variant: 'danger',
+                confirmText: 'Close',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+    });
+
+    const declineMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await api.post(`/invitations/${id}/decline`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['pending-invitations'] });
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Invitation Declined',
+                message: 'You have declined the group invitation.',
+                variant: 'info',
+                confirmText: 'Understood',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: () => {
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Error',
+                message: 'Failed to decline invitation. Please try again later.',
+                variant: 'danger',
+                confirmText: 'Close',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+    });
+
+    const leaveGroupMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await api.post(`/groups/${id}/leave`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['groups'] });
+            if (selectedGroupId) setSelectedGroupId(null);
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Membership Updated',
+                message: 'You have successfully left the group.',
+                variant: 'info',
+                confirmText: 'Done',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: (err: any) => {
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+            toast.error(err.response?.data?.message || 'Failed to leave group');
+        },
+    });
+
+    const deleteGroupMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await api.delete(`/groups/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['groups'] });
+            if (selectedGroupId) setSelectedGroupId(null);
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Group Deleted',
+                message: 'The group and all associated data have been permanently removed.',
+                variant: 'info',
+                confirmText: 'Acknowledge',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: () => {
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+            toast.error('Failed to delete group');
+        },
     });
 
     const saveTaskMutation = useMutation({
@@ -151,6 +298,7 @@ export const GroupsPage: React.FC = () => {
                                             <Check className="w-5 h-5" />
                                         </button>
                                         <button
+                                            onClick={() => declineMutation.mutate(inv.id)}
                                             className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors border border-red-500/20"
                                             title="Decline"
                                         >
@@ -214,27 +362,60 @@ export const GroupsPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {group.owner.username === currentUser?.username && (
-                                            <div className="pt-4 border-t border-white/5">
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="email"
-                                                        value={inviteEmails[group.id] || ''}
-                                                        onChange={(e) => setInviteEmails(prev => ({ ...prev, [group.id]: e.target.value }))}
-                                                        placeholder="Member email..."
-                                                        className="input-field text-sm"
-                                                    />
+                                        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                                            {group.owner.username === currentUser?.username ? (
+                                                <>
+                                                    <div className="flex gap-2 flex-grow mr-4">
+                                                        <input
+                                                            type="email"
+                                                            value={inviteEmails[group.id] || ''}
+                                                            onChange={(e) => setInviteEmails(prev => ({ ...prev, [group.id]: e.target.value }))}
+                                                            placeholder="Member email..."
+                                                            className="input-field text-sm"
+                                                        />
+                                                        <button
+                                                            onClick={() => inviteMutation.mutate({ groupId: group.id, email: inviteEmails[group.id] })}
+                                                            disabled={!inviteEmails[group.id] || inviteMutation.isPending}
+                                                            className="btn-primary py-2 px-4 flex items-center gap-2 text-sm"
+                                                        >
+                                                            <Send className="w-4 h-4" />
+                                                            Invite
+                                                        </button>
+                                                    </div>
                                                     <button
-                                                        onClick={() => inviteMutation.mutate({ groupId: group.id, email: inviteEmails[group.id] })}
-                                                        disabled={!inviteEmails[group.id] || inviteMutation.isPending}
-                                                        className="btn-primary py-2 px-4 flex items-center gap-2 text-sm"
+                                                        onClick={() => {
+                                                            setConfirmConfig({
+                                                                isOpen: true,
+                                                                title: 'Delete Group?',
+                                                                message: 'Are you sure you want to delete this group? All tasks, memberships, and invitations will be permanently removed.',
+                                                                variant: 'danger',
+                                                                onConfirm: () => deleteGroupMutation.mutate(group.id)
+                                                            });
+                                                        }}
+                                                        className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                                        title="Delete Group"
                                                     >
-                                                        <Send className="w-4 h-4" />
-                                                        Invite
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                                </>
+                                            ) : (
+                                                <button
+                                                    onClick={() => {
+                                                        setConfirmConfig({
+                                                            isOpen: true,
+                                                            title: 'Leave Group?',
+                                                            message: 'Are you sure you want to leave this group? You will lose access to all tasks and group members.',
+                                                            variant: 'warning',
+                                                            onConfirm: () => leaveGroupMutation.mutate(group.id)
+                                                        });
+                                                    }}
+                                                    className="text-sm text-gray-400 hover:text-red-400 flex items-center gap-2 transition-colors"
+                                                >
+                                                    <LogOut className="w-4 h-4" />
+                                                    Leave Group
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -335,6 +516,12 @@ export const GroupsPage: React.FC = () => {
                     </section>
                 )}
             </div>
+
+            <ConfirmDialog
+                {...confirmConfig}
+                isLoading={deleteGroupMutation.isPending || leaveGroupMutation.isPending}
+                onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+            />
 
             <TaskModal
                 isOpen={isTaskModalOpen}

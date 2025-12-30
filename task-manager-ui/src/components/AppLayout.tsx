@@ -10,6 +10,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { cn } from '../utils/cn';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -19,6 +20,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const logout = useAuthStore((state) => state.logout);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = React.useState(false);
 
     const navItems = [
         {
@@ -48,6 +50,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     ];
 
     const handleLogout = () => {
+        setIsLogoutConfirmOpen(true);
+    };
+
+    const confirmLogout = () => {
         logout();
         navigate('/login');
     };
@@ -98,6 +104,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <main className="ml-64 min-h-screen">
                 {children}
             </main>
+
+            <ConfirmDialog
+                isOpen={isLogoutConfirmOpen}
+                title="Sign Out?"
+                message="Are you sure you want to sign out of Tasker?"
+                variant="warning"
+                confirmText="Sign Out"
+                onConfirm={confirmLogout}
+                onCancel={() => setIsLogoutConfirmOpen(false)}
+            />
         </div>
     );
 };

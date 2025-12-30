@@ -29,6 +29,12 @@ public class InvitationController {
         return ResponseEntity.ok("Invitation accepted successfully");
     }
 
+    @PostMapping("/{id}/decline")
+    public ResponseEntity<String> decline(@PathVariable Long id) {
+        invitationService.declineInvitation(id);
+        return ResponseEntity.ok("Invitation declined successfully");
+    }
+
     @GetMapping("/my-pending")
     public ResponseEntity<List<Invitation>> getMyPending() {
         return ResponseEntity.ok(invitationService.getMyPendingInvitations());

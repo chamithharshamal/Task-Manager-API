@@ -74,6 +74,24 @@ public class InvitationService {
         groupService.addMember(invitation.getGroup(), currentUser);
     }
 
+    public void declineInvitation(Long invitationId) {
+        User currentUser = groupService.getCurrentUser();
+        Invitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invitation not found"));
+
+        if (!invitation.getEmail().equalsIgnoreCase(currentUser.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This invitation is not for you");
+        }
+
+        if (invitation.getStatus() != Invitation.InvitationStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invitation is already " + invitation.getStatus());
+        }
+
+        invitation.setStatus(Invitation.InvitationStatus.REJECTED);
+        invitationRepository.save(invitation);
+    }
+
     public List<Invitation> getMyPendingInvitations() {
         User currentUser = groupService.getCurrentUser();
         return invitationRepository.findByEmailAndStatus(currentUser.getEmail(), Invitation.InvitationStatus.PENDING);

@@ -14,4 +14,6 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
     List<Invitation> findByEmailAndStatus(String email, Invitation.InvitationStatus status);
 
     Optional<Invitation> findByEmailAndGroupId(String email, Long groupId);
+
+    void deleteByGroupId(Long groupId);
 }

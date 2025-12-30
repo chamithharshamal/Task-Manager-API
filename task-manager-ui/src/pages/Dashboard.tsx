@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { KanbanBoard } from '../components/KanbanBoard';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { cn } from '../utils/cn';
 import { AppLayout } from '../components/AppLayout';
 
@@ -27,6 +28,23 @@ export const Dashboard: React.FC = () => {
     const [view, setView] = React.useState<'table' | 'kanban'>('table');
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
+    const [confirmConfig, setConfirmConfig] = React.useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant: 'danger' | 'warning' | 'info';
+        confirmText?: string;
+        cancelText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'danger',
+        confirmText: 'Confirm',
+        cancelText: 'Cancel'
+    });
 
     // Fetch tasks
     const { data: tasks = [], isLoading, isError } = useQuery({
@@ -74,10 +92,26 @@ export const Dashboard: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setIsModalOpen(false);
             setEditingTask(undefined);
-            toast.success(editingTask ? 'Task updated' : 'Task created successfully');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Success!',
+                message: editingTask ? 'Task has been updated successfully.' : 'New task has been created.',
+                variant: 'info',
+                confirmText: 'Excellent',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         },
         onError: () => {
-            toast.error('Failed to save task');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Error',
+                message: 'Failed to save the task. Please try again.',
+                variant: 'danger',
+                confirmText: 'Try Again',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         }
     });
 
@@ -98,10 +132,26 @@ export const Dashboard: React.FC = () => {
         mutationFn: taskService.deleteTask,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            toast.success('Task deleted');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Task Deleted',
+                message: 'The task has been permanently removed from your list.',
+                variant: 'info',
+                confirmText: 'Acknowledge',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         },
         onError: () => {
-            toast.error('Failed to delete task');
+            setConfirmConfig({
+                isOpen: true,
+                title: 'Error',
+                message: 'Failed to delete the task. It might be already removed.',
+                variant: 'danger',
+                confirmText: 'Close',
+                cancelText: 'NONE',
+                onConfirm: () => setConfirmConfig(prev => ({ ...prev, isOpen: false }))
+            });
         }
     });
 
@@ -114,16 +164,12 @@ export const Dashboard: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        toast.warning('Are you sure?', {
-            description: 'This action cannot be undone.',
-            action: {
-                label: 'Delete',
-                onClick: () => deleteMutation.mutate(id),
-            },
-            cancel: {
-                label: 'Cancel',
-                onClick: () => { },
-            }
+        setConfirmConfig({
+            isOpen: true,
+            title: 'Delete Task?',
+            message: 'Are you sure you want to delete this task? This action cannot be undone.',
+            variant: 'danger',
+            onConfirm: () => deleteMutation.mutate(id)
         });
     };
 
@@ -356,6 +402,12 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                {...confirmConfig}
+                isLoading={deleteMutation.isPending || saveMutation.isPending}
+                onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+            />
 
             <TaskModal
                 isOpen={isModalOpen}
