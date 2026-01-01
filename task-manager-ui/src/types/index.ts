@@ -8,6 +8,13 @@ export interface Group {
     members: User[];
 }
 
+export interface Comment {
+    id: number;
+    text: string;
+    createdAt: string;
+    author: User;
+}
+
 export interface Task {
     id: number;
     title: string;
@@ -20,6 +27,7 @@ export interface Task {
     user: User; // Owner
     group?: Group;
     assignedUser?: User;
+    comments?: Comment[];
 }
 
 export interface User {

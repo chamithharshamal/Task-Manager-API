@@ -59,4 +59,14 @@ export const taskService = {
         const response = await api.get<Task[]>(`/tasks/group/${groupId}`);
         return response.data;
     },
+
+    getComments: async (taskId: number) => {
+        const response = await api.get<any[]>(`/tasks/${taskId}/comments`);
+        return response.data;
+    },
+
+    addComment: async (taskId: number, text: string) => {
+        const response = await api.post<any>(`/tasks/${taskId}/comments`, { text });
+        return response.data;
+    },
 };
