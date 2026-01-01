@@ -35,11 +35,6 @@ export const ActivityPanel: React.FC = () => {
 
     return (
         <div className="glass-card p-6 h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-6">
-                <History className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-xl font-bold text-white tracking-tight">Recent Activity</h3>
-            </div>
-
             <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
                 {activities.length === 0 ? (
                     <div className="text-center py-10">
