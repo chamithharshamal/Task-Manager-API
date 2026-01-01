@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -60,5 +62,33 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 request.getDescription(false),
                 errors);
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidFormatException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException ex, WebRequest request) {
+        Map<String, String> errors = new HashMap<>();
+        if (ex.getTargetType().isEnum()) {
+            String fieldName = ex.getPath().get(0).getFieldName();
+            String validValues = java.util.Arrays.toString(ex.getTargetType().getEnumConstants());
+            errors.put(fieldName, "must be one of " + validValues);
+        } else {
+            errors.put("error", "Invalid format: " + ex.getMessage());
+        }
+
+        ErrorResponse errorDetails = new ErrorResponse(
+                LocalDateTime.now(),
+                "Invalid Format",
+                request.getDescription(false),
+                errors);
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
+        ErrorResponse errorDetails = new ErrorResponse(
+                LocalDateTime.now(),
+                ex.getReason(),
+                request.getDescription(false));
+        return new ResponseEntity<>(errorDetails, ex.getStatusCode());
     }
 }

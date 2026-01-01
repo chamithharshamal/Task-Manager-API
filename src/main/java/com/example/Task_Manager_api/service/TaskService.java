@@ -8,6 +8,7 @@ import com.example.Task_Manager_api.model.Group;
 import com.example.Task_Manager_api.repository.TaskRepository;
 import com.example.Task_Manager_api.repository.UserRepository;
 import com.example.Task_Manager_api.repository.GroupRepository;
+import com.example.Task_Manager_api.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,9 @@ public class TaskService {
 
     @Autowired
     private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private ActivityLogService activityLogService;
 
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -96,6 +100,7 @@ public class TaskService {
             if (task.getCreatedAt() == null) {
                 task.setCreatedAt(LocalDateTime.now());
             }
+            activityLogService.logActivity("TASK_CREATED", "Created task: " + task.getTitle(), currentUser, task);
         }
 
         Task savedTask = taskRepository.save(task);
@@ -198,6 +203,9 @@ public class TaskService {
 
                 if (oldAssignee == null || !oldAssignee.getId().equals(assignee.getId())) {
                     existingTask.setAssignedUser(assignee);
+                    activityLogService.logActivity("ASSIGNEE_CHANGE",
+                            "Assigned '" + existingTask.getTitle() + "' to " + assignee.getUsername(),
+                            currentUser, existingTask);
                     // Send email
                     if (existingTask.getGroup() != null) {
                         try {
@@ -290,8 +298,14 @@ public class TaskService {
         return taskRepository.findByUser(getCurrentUser(), pageable);
     }
 
-    public List<Task> searchByTitle(String title) {
-        return taskRepository.findByUserAndTitleContainingIgnoreCase(getCurrentUser(), title);
+    public List<Task> searchTasks(String query) {
+        return taskRepository.searchTasks(getCurrentUser(), query);
+    }
+
+    public List<Task> getTasksDueThisWeek() {
+        LocalDate start = LocalDate.now();
+        LocalDate end = start.plusDays(7);
+        return taskRepository.findTasksDueBetween(getCurrentUser(), start, end);
     }
 
     public List<Task> getTasksByGroup(Long groupId) {

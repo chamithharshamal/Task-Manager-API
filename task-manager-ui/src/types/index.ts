@@ -51,6 +51,15 @@ export interface PaginatedResponse<T> {
     size: number;
 }
 
+export interface ActivityLog {
+    id: number;
+    type: 'TASK_CREATED' | 'STATUS_CHANGE' | 'COMMENT_ADDED' | 'ASSIGNEE_CHANGE';
+    description: string;
+    timestamp: string;
+    user: User;
+    task?: Task;
+}
+
 export interface Invitation {
     id: number;
     email: string;

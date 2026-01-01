@@ -67,6 +67,18 @@ public class TaskController {
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/search")
+    public List<Task> searchTasks(@RequestParam String query) {
+        return taskService.searchTasks(query);
+    }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/due-this-week")
+    public List<Task> getTasksDueThisWeek() {
+        return taskService.getTasksDueThisWeek();
+    }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/filter/today")
     public ResponseEntity<List<Task>> getTaskCreatedToday() {
         return ResponseEntity.ok(taskService.getTaskCreatedToday());
@@ -101,12 +113,6 @@ public class TaskController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(taskService.getAllTasks(pageable));
-    }
-
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @GetMapping("/search")
-    public ResponseEntity<List<Task>> searchByTitle(@RequestParam("title") String title) {
-        return ResponseEntity.ok(taskService.searchByTitle(title));
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")

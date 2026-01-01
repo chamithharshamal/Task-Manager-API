@@ -48,10 +48,8 @@ export const taskService = {
         return response.data;
     },
 
-    searchTasks: async (title: string) => {
-        const response = await api.get<Task[]>('/tasks/search', {
-            params: { title },
-        });
+    searchTasks: async (query: string) => {
+        const response = await api.get<Task[]>('/tasks/search', { params: { query } });
         return response.data;
     },
 
@@ -62,6 +60,11 @@ export const taskService = {
 
     getComments: async (taskId: number) => {
         const response = await api.get<any[]>(`/tasks/${taskId}/comments`);
+        return response.data;
+    },
+
+    getTasksDueThisWeek: async () => {
+        const response = await api.get<Task[]>('/tasks/due-this-week');
         return response.data;
     },
 

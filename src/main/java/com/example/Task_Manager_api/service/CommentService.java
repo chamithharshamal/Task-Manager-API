@@ -31,6 +31,9 @@ public class CommentService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username;
@@ -54,6 +57,10 @@ public class CommentService {
         comment.setTask(task);
 
         Comment saved = commentRepository.save(comment);
+
+        activityLogService.logActivity("COMMENT_ADDED",
+                "Added a comment to '" + task.getTitle() + "'",
+                currentUser, task);
 
         // Broadcast via WebSocket
         messagingTemplate.convertAndSend("/topic/tasks/" + taskId + "/comments", "updated");
