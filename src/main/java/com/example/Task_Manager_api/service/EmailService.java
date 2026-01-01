@@ -31,4 +31,15 @@ public class EmailService {
                         + "Please log in to your dashboard to view the details.\n\nBest regards,\nTask Manager Team");
         mailSender.send(message);
     }
+
+    public void sendDueDateReminderEmail(String to, String taskTitle, java.time.LocalDate dueDate) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Last Call: Task '" + taskTitle + "' is due tomorrow!");
+        message.setText(
+                "Hello,\n\nThis is a friendly reminder that your task '" + taskTitle + "' is due on " + dueDate
+                        + ".\n\n"
+                        + "Stay productive and get it done!\n\nBest regards,\nTask Manager Team");
+        mailSender.send(message);
+    }
 }

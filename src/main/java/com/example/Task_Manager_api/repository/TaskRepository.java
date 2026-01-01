@@ -35,4 +35,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByAssignedUser(User user);
 
     void deleteByGroupId(Long groupId);
+
+    List<Task> findByDueDateAndStatusNot(java.time.LocalDate dueDate, TaskStatus status);
 }
