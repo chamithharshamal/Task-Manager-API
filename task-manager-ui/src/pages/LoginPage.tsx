@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LogIn, Loader2 } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../api/client';
 import type { AuthResponse } from '../types';
@@ -16,6 +16,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export const LoginPage: React.FC = () => {
+    const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const [error, setError] = React.useState<string | null>(null);
@@ -37,9 +38,11 @@ export const LoginPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await api.post<AuthResponse>('/auth/login', data);
-            setAuth(response.data.token, data.username);
-            window.location.href = '/dashboard';
+            const { username, password } = data;
+            const response = await api.post('/auth/login', { username, password });
+            const { accessToken, refreshToken } = response.data;
+            setAuth(accessToken, refreshToken, username);
+            navigate('/dashboard');
         } catch (err: any) {
             setError(err.response?.data || 'Login failed. Please check your credentials.');
         } finally {

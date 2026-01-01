@@ -28,16 +28,27 @@ public class AuthService {
     private UserRepository userRepository;
 
     @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    public String authenticate(AuthRequest request) {
+    public com.example.Task_Manager_api.payload.AuthResponse authenticate(AuthRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-            SecurityContextHolder.getContext().setAuthentication(authentication); // Optional for JWT
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found after authentication"));
-            return jwtTokenProvider.generateToken(user.getUsername(), user.getRoles());
+
+            String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRoles());
+
+            // Delete old refresh token and create new one
+            refreshTokenService.deleteByUserId(user.getId());
+            com.example.Task_Manager_api.model.RefreshToken refreshToken = refreshTokenService
+                    .createRefreshToken(user.getId());
+
+            return new com.example.Task_Manager_api.payload.AuthResponse(accessToken, refreshToken.getToken());
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Invalid username or password", e);
         } catch (UsernameNotFoundException e) {
@@ -62,5 +73,18 @@ public class AuthService {
         }
 
         userRepository.save(user);
+    }
+
+    public java.util.Optional<com.example.Task_Manager_api.model.RefreshToken> findByRefreshToken(String token) {
+        return refreshTokenService.findByToken(token);
+    }
+
+    public com.example.Task_Manager_api.model.RefreshToken verifyExpiration(
+            com.example.Task_Manager_api.model.RefreshToken token) {
+        return refreshTokenService.verifyExpiration(token);
+    }
+
+    public String generateAccessToken(User user) {
+        return jwtTokenProvider.generateToken(user.getUsername(), user.getRoles());
     }
 }

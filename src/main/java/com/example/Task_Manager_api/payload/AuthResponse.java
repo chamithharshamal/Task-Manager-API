@@ -1,13 +1,24 @@
 package com.example.Task_Manager_api.payload;
 
 public class AuthResponse {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
+    private String tokenType = "Bearer";
 
-    public AuthResponse(String token) {
-        this.token = token;
+    public AuthResponse(String accessToken, String refreshToken) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
     }
 
-    public String getToken() {
-        return token;
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public String getTokenType() {
+        return tokenType;
     }
 }

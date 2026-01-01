@@ -12,10 +12,10 @@ spring:
         dialect: org.hibernate.dialect.MariaDBDialect
     open-in-view: true
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: chweerasinghe619@gmail.com
-    password: nkwe qsww wflz uxyd
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -27,5 +27,5 @@ spring:
           writetimeout: 5000
 
 jwt:
-  secret: "v9y$B&E)H@McQfTjWnZr4u7x!A%C*F-JaNdRgUkXp2s5v8y/B?E(G+KbPeShVmYp"
-  expiration-in-ms: 3600000
+  secret: ${JWT_SECRET:v9y$B&E)H@McQfTjWnZr4u7x!A%C*F-JaNdRgUkXp2s5v8y/B?E(G+KbPeShVmYp}
+  expiration-in-ms: ${JWT_EXPIRATION:3600000}
