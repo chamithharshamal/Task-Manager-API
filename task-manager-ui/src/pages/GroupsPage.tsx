@@ -1,13 +1,16 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Mail, Plus, Check, X, Loader2, Send, ListTodo, Edit, LogOut, Trash2, Search } from 'lucide-react';
+import { Users, Mail, Plus, Check, X, Loader2, Send, ListTodo, Edit, LogOut, Trash2, Search, History } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '../utils/cn';
+import { ActivityPanel } from '../components/ActivityPanel';
 import api from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { Group, Invitation, Task } from '../types';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { AppLayout } from '../components/AppLayout';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 export const GroupsPage: React.FC = () => {
@@ -19,6 +22,7 @@ export const GroupsPage: React.FC = () => {
     const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
     const [taskSearch, setTaskSearch] = React.useState('');
+    const [isActivityOpen, setIsActivityOpen] = React.useState(false);
 
     // Subscribe to group task updates
     useWebSocket(
@@ -161,15 +165,22 @@ export const GroupsPage: React.FC = () => {
     const groupTasks = tasks?.filter((t: Task) => t.group?.id === selectedGroupId) || [];
 
     return (
-        <div className="min-h-screen bg-cyber-black text-white p-8">
-            <div className="max-w-6xl mx-auto space-y-12">
+        <AppLayout>
+            <div className="p-8 max-w-[1600px] mx-auto space-y-12">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight">Collaboration Groups</h1>
                         <p className="text-gray-400 mt-2">Manage your teams and shared projects.</p>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        <button
+                            onClick={() => setIsActivityOpen(true)}
+                            className="p-2.5 bg-white/5 hover:bg-white/10 text-emerald-500 rounded-xl transition-all border border-white/5 group"
+                            title="View Activity"
+                        >
+                            <History className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                        </button>
                         <input
                             type="text"
                             value={newGroupName}
@@ -313,7 +324,6 @@ export const GroupsPage: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                                     <input
                                         type="text"
                                         value={taskSearch}
@@ -395,6 +405,41 @@ export const GroupsPage: React.FC = () => {
                 initialData={editingTask}
                 title={editingTask ? 'Edit Task' : 'Add Task'}
             />
-        </div>
+
+            {/* Activity Drawer */}
+            <div
+                className={cn(
+                    "fixed inset-0 z-[60] transition-opacity duration-300",
+                    isActivityOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                )}
+            >
+                <div
+                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                    onClick={() => setIsActivityOpen(false)}
+                />
+                <div
+                    className={cn(
+                        "absolute right-0 top-0 bottom-0 w-full max-w-md bg-cyber-black border-l border-white/5 shadow-2xl transition-transform duration-500 transform",
+                        isActivityOpen ? "translate-x-0" : "translate-x-full"
+                    )}
+                >
+                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <History className="w-5 h-5 text-emerald-500" />
+                            <h3 className="text-lg font-bold text-white">Recent Activity</h3>
+                        </div>
+                        <button
+                            onClick={() => setIsActivityOpen(false)}
+                            className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white"
+                        >
+                            <Plus className="w-5 h-5 rotate-45" />
+                        </button>
+                    </div>
+                    <div className="h-full overflow-hidden pb-20">
+                        <ActivityPanel />
+                    </div>
+                </div>
+            </div>
+        </AppLayout>
     );
 };
