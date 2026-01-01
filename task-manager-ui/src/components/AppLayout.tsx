@@ -26,8 +26,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {
             label: 'Dashboard',
             icon: LayoutDashboard,
-            path: '/',
-            active: location.pathname === '/'
+            path: '/dashboard',
+            active: location.pathname === '/dashboard'
         },
         {
             label: 'Analytics',
@@ -63,7 +63,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             {/* Sidebar */}
             <aside className="fixed left-0 top-0 h-screen w-64 bg-cyber-dark border-r border-white/5 flex flex-col z-[40]">
                 <div className="p-6">
-                    <div className="flex items-center gap-3 text-emerald-500 font-bold text-xl uppercase tracking-widest cursor-pointer" onClick={() => navigate('/')}>
+                    <div className="flex items-center gap-3 text-emerald-500 font-bold text-xl uppercase tracking-widest cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
                             <CheckCircle2 className="w-6 h-6" />
                         </div>

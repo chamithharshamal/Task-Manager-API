@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { UserPlus, Loader2, ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import api from '../api/client';
 
 const registerSchema = z.object({
@@ -20,8 +21,13 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const [error, setError] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
+
+    if (isAuthenticated) {
+        return <Navigate to="/dashboard" />;
+    }
 
     const {
         register,
