@@ -66,7 +66,7 @@ export const RegisterPage: React.FC = () => {
                         </div>
                     </div>
                     <h2 className="text-3xl font-bold text-white tracking-tight">Create Account</h2>
-                    <p className="mt-2 text-gray-400">Join Tasker and stay organized</p>
+                    <p className="mt-2 text-gray-400">Join Synapse and stay organized</p>
                 </div>
 
                 <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>

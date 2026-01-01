@@ -60,7 +60,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
-                        Tasker
+                        Synapse
                     </div>
                 </div>
 
@@ -101,7 +101,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <ConfirmDialog
                 isOpen={isLogoutConfirmOpen}
                 title="Sign Out?"
-                message="Are you sure you want to sign out of Tasker?"
+                message="Are you sure you want to sign out of Synapse?"
                 variant="warning"
                 confirmText="Sign Out"
                 onConfirm={confirmLogout}

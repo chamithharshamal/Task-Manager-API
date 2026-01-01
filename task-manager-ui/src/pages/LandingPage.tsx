@@ -60,7 +60,7 @@ export const LandingPage: React.FC = () => {
                         <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
-                        Tasker
+                        Synapse
                     </div>
 
                     <div className="hidden md:flex items-center gap-10">
@@ -102,7 +102,7 @@ export const LandingPage: React.FC = () => {
                     </h1>
 
                     <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed font-medium px-4">
-                        Tasker is a high-performance productivity engine designed for elite teams.
+                        Synapse is a high-performance productivity engine designed for elite teams.
                         Streamline your workflow with real-time collaboration and deep analytics.
                     </p>
 
@@ -243,7 +243,7 @@ export const LandingPage: React.FC = () => {
                             </h2>
                         </div>
                         <p className="text-lg text-gray-400 leading-relaxed font-medium">
-                            Tasker transforms individual effort into team success. Invite partners, manage permissions, and track group progress in one unified interface.
+                            Synapse transforms individual effort into team success. Invite partners, manage permissions, and track group progress in one unified interface.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
                             {[
@@ -278,7 +278,7 @@ export const LandingPage: React.FC = () => {
                         <div className="space-y-8 max-w-sm">
                             <div className="flex items-center gap-3 text-emerald-500 font-display font-black text-3xl uppercase tracking-tighter">
                                 <CheckCircle2 className="w-8 h-8" />
-                                Tasker
+                                Synapse
                             </div>
                             <p className="text-gray-500 font-medium leading-relaxed">
                                 Built for the next generation of creators. Focused on speed, security, and aesthetics. Step into the future of task management.
@@ -314,7 +314,7 @@ export const LandingPage: React.FC = () => {
                     </div>
 
                     <div className="pt-10 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs font-black uppercase tracking-[0.3em] text-gray-600">
-                        <div>© 2025 Tasker Inc.</div>
+                        <div>© 2025 Synapse Inc.</div>
                         <div className="flex items-center gap-6">
                             <span>Status: Online</span>
                             <span className="text-emerald-500/50">Version: 2.0.4-ELITE</span>

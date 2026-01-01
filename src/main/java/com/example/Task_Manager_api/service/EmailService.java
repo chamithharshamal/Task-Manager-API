@@ -17,7 +17,7 @@ public class EmailService {
         message.setSubject("Invitation to join Group: " + groupName);
         message.setText("Hello,\n\n" + ownerName + " has invited you to join their task management group: " + groupName
                 +
-                ".\n\nPlease log in to your account to accept the invitation.\n\nBest regards,\nTask Manager Team");
+                ".\n\nPlease log in to your account to accept the invitation.\n\nBest regards,\nSynapse Team");
         mailSender.send(message);
     }
 
@@ -28,7 +28,7 @@ public class EmailService {
         message.setText(
                 "Hello,\n\n" + assignerName + " has assigned a new task to you in group '" + groupName + "':\n\n"
                         + "Task: " + taskTitle + "\n\n"
-                        + "Please log in to your dashboard to view the details.\n\nBest regards,\nTask Manager Team");
+                        + "Please log in to your dashboard to view the details.\n\nBest regards,\nSynapse Team");
         mailSender.send(message);
     }
 
@@ -39,7 +39,7 @@ public class EmailService {
         message.setText(
                 "Hello,\n\nThis is a friendly reminder that your task '" + taskTitle + "' is due on " + dueDate
                         + ".\n\n"
-                        + "Stay productive and get it done!\n\nBest regards,\nTask Manager Team");
+                        + "Stay productive and get it done!\n\nBest regards,\nSynapse Team");
         mailSender.send(message);
     }
 }

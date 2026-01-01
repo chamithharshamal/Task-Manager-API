@@ -1,5 +1,5 @@
-Task Manager API
-A RESTful API built with Spring Boot for managing tasks, integrated with MariaDB for persistent storage. This project provides endpoints for creating, reading, updating, and deleting tasks, with a database backend hosted on XAMPP’s MariaDB.
+# Synapse - Task Management System
+A high-performance productivity engine built with Spring Boot and React, featuring real-time collaboration and "Cyber Emerald" aesthetics.
 Features
 
 Create, read, update, and delete (CRUD) operations for tasks.
