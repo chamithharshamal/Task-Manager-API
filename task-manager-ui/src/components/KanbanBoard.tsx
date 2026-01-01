@@ -7,10 +7,12 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    defaultDropAnimation,
 } from '@dnd-kit/core';
 import type {
     DragStartEvent,
     DragEndEvent,
+    DropAnimation,
 } from '@dnd-kit/core';
 import {
     SortableContext,
@@ -88,6 +90,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, onUpdateStatus,
 
     const activeTask = activeId ? tasks.find(t => t.id === activeId) : null;
 
+    const dropAnimation: DropAnimation = {
+        ...defaultDropAnimation,
+    };
+
     return (
         <DndContext
             sensors={sensors}
@@ -106,10 +112,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, onUpdateStatus,
                     />
                 ))}
             </div>
-            <DragOverlay>
+            <DragOverlay dropAnimation={dropAnimation}>
                 {activeTask ? (
-                    <div className="glass-card p-4 border-emerald-500/50 rotate-3 shadow-2xl w-[300px]">
-                        <h4 className="font-bold text-white mb-1">{activeTask.title}</h4>
+                    <div className="glass-card p-4 border-emerald-500/50 shadow-2xl w-full max-w-[320px] scale-105 opacity-90 cursor-grabbing">
+                        <div className="flex justify-between items-start mb-2">
+                            <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase border",
+                                activeTask.priority === 'HIGH' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                    activeTask.priority === 'MEDIUM' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                                        'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            )}>
+                                {activeTask.priority || 'MEDIUM'}
+                            </span>
+                        </div>
+                        <h4 className="font-bold text-white text-sm mb-1">{activeTask.title}</h4>
                         <div
                             className="text-xs text-gray-400 line-clamp-2 prose prose-invert prose-xs"
                             dangerouslySetInnerHTML={{ __html: activeTask.description || '' }}
