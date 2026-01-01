@@ -4,7 +4,6 @@ import {
     BarChart3,
     LogOut,
     CheckCircle2,
-    Calendar,
     Users
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -34,12 +33,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             icon: BarChart3,
             path: '/analytics',
             active: location.pathname === '/analytics'
-        },
-        {
-            label: 'Schedule',
-            icon: Calendar,
-            path: '/schedule',
-            active: location.pathname === '/schedule'
         },
         {
             label: 'Groups',

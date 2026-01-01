@@ -8,6 +8,7 @@ import type { Group, Invitation, Task } from '../types';
 import { taskService } from '../api/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export const GroupsPage: React.FC = () => {
     const queryClient = useQueryClient();
@@ -18,6 +19,13 @@ export const GroupsPage: React.FC = () => {
     const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
     const [taskSearch, setTaskSearch] = React.useState('');
+
+    // Subscribe to group task updates
+    useWebSocket(
+        selectedGroupId ? `/topic/groups/${selectedGroupId}/tasks` : undefined,
+        ['group-tasks', selectedGroupId]
+    );
+
     const [confirmConfig, setConfirmConfig] = React.useState<{
         isOpen: boolean;
         title: string;

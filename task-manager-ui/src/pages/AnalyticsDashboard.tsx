@@ -17,6 +17,7 @@ import { taskService } from '../api/taskService';
 import api from '../api/client';
 import { AppLayout } from '../components/AppLayout';
 import type { Group } from '../types';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const COLORS = {
     'TO_DO': '#94a3b8',
@@ -29,6 +30,13 @@ const COLORS = {
 
 export const AnalyticsDashboard: React.FC = () => {
     const [selectedGroupId, setSelectedGroupId] = React.useState<number | 'ALL'>('ALL');
+
+    // Subscribe to task updates
+    useWebSocket('/topic/tasks', ['tasks']);
+    useWebSocket(
+        selectedGroupId !== 'ALL' ? `/topic/groups/${selectedGroupId}/tasks` : undefined,
+        ['tasks']
+    );
 
     const { data: tasks = [] } = useQuery({
         queryKey: ['tasks'],
@@ -229,7 +237,7 @@ export const AnalyticsDashboard: React.FC = () => {
                             <Activity className="w-5 h-5 text-blue-500" />
                             Status Distribution
                         </h3>
-                        <div className="h-[300px] w-full flex items-center">
+                        <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie

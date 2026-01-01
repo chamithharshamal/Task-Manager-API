@@ -21,9 +21,14 @@ import { KanbanBoard } from '../components/KanbanBoard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { cn } from '../utils/cn';
 import { AppLayout } from '../components/AppLayout';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export const Dashboard: React.FC = () => {
     const queryClient = useQueryClient();
+
+    // Subscribe to task updates
+    useWebSocket('/topic/tasks', ['tasks']);
+
     const [search, setSearch] = React.useState('');
     const [view, setView] = React.useState<'table' | 'kanban'>('table');
     const [isModalOpen, setIsModalOpen] = React.useState(false);

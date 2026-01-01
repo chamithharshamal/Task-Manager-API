@@ -38,6 +38,9 @@ public class TaskService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username;
@@ -111,7 +114,20 @@ public class TaskService {
             }
         }
 
+        // Broadcast update via WebSocket
+        broadcastTaskUpdate(savedTask);
+
         return savedTask;
+    }
+
+    private void broadcastTaskUpdate(Task task) {
+        // Broadcast to group topic if applicable
+        if (task.getGroup() != null) {
+            messagingTemplate.convertAndSend("/topic/groups/" + task.getGroup().getId() + "/tasks", "updated");
+        }
+        // Always broadcast to global tasks topic for general UI refreshes (like
+        // Analytics)
+        messagingTemplate.convertAndSend("/topic/tasks", "updated");
     }
 
     public List<Task> getAllTasks() {
@@ -224,6 +240,7 @@ public class TaskService {
         }
 
         taskRepository.save(existingTask);
+        broadcastTaskUpdate(existingTask);
         return existingTask;
     }
 
