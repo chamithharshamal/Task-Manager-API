@@ -1,11 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { Dashboard } from './pages/Dashboard';
-import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
-import { GroupsPage } from './pages/GroupsPage';
-import { LandingPage } from './pages/LandingPage';
+import {
+  LoginPage,
+  RegisterPage,
+  Dashboard,
+  AnalyticsDashboard,
+  GroupsPage,
+  LandingPage
+} from './pages';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';

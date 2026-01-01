@@ -42,6 +42,7 @@ public class Task {
     private User assignedUser;
 
     private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
 
     public Task() {
     }
@@ -124,6 +125,14 @@ public class Task {
 
     public void setAssignedUser(User assignedUser) {
         this.assignedUser = assignedUser;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
     }
 
 }

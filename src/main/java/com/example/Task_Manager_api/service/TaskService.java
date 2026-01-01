@@ -35,6 +35,9 @@ public class TaskService {
     @Autowired
     private GroupRepository groupRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username;
@@ -92,7 +95,23 @@ public class TaskService {
             }
         }
 
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+
+        // Send email if newly assigned
+        if (savedTask.getAssignedUser() != null && savedTask.getGroup() != null) {
+            try {
+                emailService.sendTaskAssignmentEmail(
+                        savedTask.getAssignedUser().getEmail(),
+                        savedTask.getTitle(),
+                        savedTask.getGroup().getName(),
+                        currentUser.getUsername());
+            } catch (Exception e) {
+                // Log error but don't fail task creation
+                System.err.println("Failed to send assignment email: " + e.getMessage());
+            }
+        }
+
+        return savedTask;
     }
 
     public List<Task> getAllTasks() {
@@ -140,6 +159,12 @@ public class TaskService {
                 existingTask.setDescription(partialTask.getDescription());
             }
             if (partialTask.getStatus() != null) {
+                if (partialTask.getStatus() == TaskStatus.COMPLETED
+                        && existingTask.getStatus() != TaskStatus.COMPLETED) {
+                    existingTask.setCompletedAt(LocalDateTime.now());
+                } else if (partialTask.getStatus() != TaskStatus.COMPLETED) {
+                    existingTask.setCompletedAt(null);
+                }
                 existingTask.setStatus(partialTask.getStatus());
             }
             if (partialTask.getPriority() != null) {
@@ -148,11 +173,36 @@ public class TaskService {
             if (partialTask.getDueDate() != null) {
                 existingTask.setDueDate(partialTask.getDueDate());
             }
+
+            // check if assignment changed
+            User oldAssignee = existingTask.getAssignedUser();
             if (partialTask.getAssignedUser() != null && partialTask.getAssignedUser().getId() != null) {
                 User assignee = userRepository.findById(partialTask.getAssignedUser().getId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignee not found"));
-                existingTask.setAssignedUser(assignee);
+
+                if (oldAssignee == null || !oldAssignee.getId().equals(assignee.getId())) {
+                    existingTask.setAssignedUser(assignee);
+                    // Send email
+                    if (existingTask.getGroup() != null) {
+                        try {
+                            emailService.sendTaskAssignmentEmail(
+                                    assignee.getEmail(),
+                                    existingTask.getTitle(),
+                                    existingTask.getGroup().getName(),
+                                    currentUser.getUsername());
+                        } catch (Exception e) {
+                            System.err.println("Failed to send assignment email: " + e.getMessage());
+                        }
+                    }
+                }
+            } else if (partialTask.getAssignedUser() == null && partialTask.getGroup() != null) {
+                // If the user explicitly sets assignedUser to null or it's missing in a way
+                // that means unassigning.
+                // However, partialTask might just not contain it.
+                // For now, let's assume if it's there but ID is null, we unassign.
+                // But normally we only update if it is NOT null in partial update.
             }
+
             if (partialTask.getGroup() != null && partialTask.getGroup().getId() != null) {
                 Group group = groupRepository.findById(partialTask.getGroup().getId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
@@ -161,6 +211,12 @@ public class TaskService {
         } else if (isAssigned) {
             // Assigned members can only change status
             if (partialTask.getStatus() != null) {
+                if (partialTask.getStatus() == TaskStatus.COMPLETED
+                        && existingTask.getStatus() != TaskStatus.COMPLETED) {
+                    existingTask.setCompletedAt(LocalDateTime.now());
+                } else if (partialTask.getStatus() != TaskStatus.COMPLETED) {
+                    existingTask.setCompletedAt(null);
+                }
                 existingTask.setStatus(partialTask.getStatus());
             }
         } else {
@@ -168,7 +224,7 @@ public class TaskService {
         }
 
         taskRepository.save(existingTask);
-        return getTaskById(id);
+        return existingTask;
     }
 
     public void deleteTask(Long id) {

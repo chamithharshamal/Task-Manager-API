@@ -16,6 +16,7 @@ export interface Task {
     priority: TaskPriority;
     dueDate?: string;
     createdAt: string;
+    completedAt?: string;
     user: User; // Owner
     group?: Group;
     assignedUser?: User;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Mail, Plus, Check, X, Loader2, Send, ListTodo, Edit, LogOut, Trash2 } from 'lucide-react';
+import { Users, Mail, Plus, Check, X, Loader2, Send, ListTodo, Edit, LogOut, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -17,6 +17,7 @@ export const GroupsPage: React.FC = () => {
     const [selectedGroupId, setSelectedGroupId] = React.useState<number | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false);
     const [editingTask, setEditingTask] = React.useState<Task | undefined>(undefined);
+    const [taskSearch, setTaskSearch] = React.useState('');
     const [confirmConfig, setConfirmConfig] = React.useState<{
         isOpen: boolean;
         title: string;
@@ -451,6 +452,21 @@ export const GroupsPage: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Task Search Bar */}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                <Search className="w-5 h-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                value={taskSearch}
+                                onChange={(e) => setTaskSearch(e.target.value)}
+                                placeholder="Search group tasks..."
+                                className="input-field w-full max-w-md"
+                                style={{ paddingLeft: '3.5rem' }}
+                            />
+                        </div>
+
                         <div className="glass-card overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
@@ -467,7 +483,11 @@ export const GroupsPage: React.FC = () => {
                                             <tr><td colSpan={4} className="px-6 py-10 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-emerald-500" /></td></tr>
                                         ) : groupTasks && groupTasks.length > 0 ? (
                                             groupTasks
-                                                .filter(t => t.user?.username === currentUser?.username || t.assignedUser?.username === currentUser?.username)
+                                                .filter(t =>
+                                                    (t.user?.username === currentUser?.username || t.assignedUser?.username === currentUser?.username) &&
+                                                    (t.title.toLowerCase().includes(taskSearch.toLowerCase()) ||
+                                                        t.assignedUser?.username.toLowerCase().includes(taskSearch.toLowerCase()))
+                                                )
                                                 .map((task) => (
                                                     <tr key={task.id} className="hover:bg-white/[0.02] transition-colors group">
                                                         <td className="px-6 py-4">
@@ -532,6 +552,6 @@ export const GroupsPage: React.FC = () => {
                 initialData={editingTask}
                 title={editingTask ? 'Edit Group Task' : 'Add Group Task'}
             />
-        </div>
+        </div >
     );
 };
